@@ -1,5 +1,11 @@
 # @oipsanthony/pi-prompt-translator
 
+## 0.2.5
+
+### Patch Changes
+
+- a32b178: 修复 npm 发布包中的内部依赖版本，避免消费者安装时因 `workspace:*` 协议失败。
+
 ## 0.2.4
 
 ### Patch Changes
