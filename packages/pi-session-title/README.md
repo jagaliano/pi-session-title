@@ -16,8 +16,10 @@ pi install npm:@oipsanthony/pi-session-title
 |------|------|
 | `/session-title` | 根据当前对话重新生成标题 |
 | `/session-title status` | 查看启用状态、当前名称和使用的模型 |
+| `/session-title suggest "标题"` | 立即采用指定标题，后续自动刷新仍可替换它 |
+| `/session-title fix "标题"` | 立即采用指定标题，并锁定它，禁止自动刷新替换 |
 
-需要直接指定名称时，请使用 Pi 内置 `/name`。
+`/session-title suggest "标题"` 和 `/session-title fix "标题"` 都会清理控制字符、Markdown 包装和超过 `maxLength` 的内容。`fix` 的锁定行为与 Pi 内置 `/name` 相同；需要重新交给自动命名时，使用 `/session-title` 并确认。
 
 ## 配置
 

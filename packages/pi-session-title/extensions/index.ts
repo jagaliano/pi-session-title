@@ -8,6 +8,7 @@ import {
 import {
   STATE_ENTRY_TYPE,
   buildNamingContext,
+  cleanTitle,
   configuredModelLabel,
   createState,
   extractCompletedExchanges,
@@ -34,6 +35,20 @@ type SessionContext = ExtensionContext & {
     getSessionName?(): string | undefined;
   };
 };
+
+type ExplicitTitleMode = "suggest" | "fix";
+
+function parseExplicitTitleCommand(args: string): { mode: ExplicitTitleMode; title: string } | undefined {
+  const match = /^\s*(suggest|fix)\s+([\s\S]+?)\s*$/u.exec(args);
+  if (!match) return undefined;
+
+  const mode = match[1] as ExplicitTitleMode;
+  const rawTitle = match[2]!;
+  const quote = rawTitle[0];
+  if (quote !== '"' && quote !== "'") return { mode, title: rawTitle };
+  if (rawTitle.length < 2 || rawTitle.at(-1) !== quote) return undefined;
+  return { mode, title: rawTitle.slice(1, -1) };
+}
 
 export default function register(
   pi: ExtensionAPI,
@@ -322,8 +337,9 @@ export default function register(
         );
         return;
       }
-      if (command) {
-        ctx.ui.notify("Usage: /session-title [status]", "warning");
+      const explicitTitle = parseExplicitTitleCommand(command);
+      if (command && !explicitTitle) {
+        ctx.ui.notify("Usage: /session-title [status | suggest <title> | fix <title>]", "warning");
         return;
       }
       if (!config.enabled) {
@@ -332,6 +348,27 @@ export default function register(
       }
       if (ctx.mode !== "tui") {
         ctx.ui.notify("/session-title requires interactive mode.", "warning");
+        return;
+      }
+      if (explicitTitle) {
+        const title = cleanTitle(explicitTitle.title, config.maxLength);
+        if (!title) {
+          ctx.ui.notify("Session title must contain visible text.", "warning");
+          return;
+        }
+
+        inFlight?.abort();
+        inFlight = undefined;
+        pendingOwnName = title;
+        pi.setSessionName(title);
+        await syncDisplay(ctx, title);
+        persistState(createState(explicitTitle.mode === "fix" ? "manual" : "generated", turnCount(ctx), title));
+        ctx.ui.notify(
+          explicitTitle.mode === "fix"
+            ? `Session title fixed: ${title}. Automatic refresh is locked.`
+            : `Session title suggested: ${title}. Automatic refresh remains enabled.`,
+          "info",
+        );
         return;
       }
 
