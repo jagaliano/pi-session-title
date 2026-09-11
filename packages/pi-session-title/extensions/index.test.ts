@@ -586,6 +586,11 @@ describe("extension lifecycle and race protection", () => {
 
     assert.equal(calls, 0);
     assert.equal(harness.getName(), "Fixed title");
+
+    harness.setName("Manual title");
+    await harness.handlers.get("session_info_changed")?.({ name: "Manual title" }, harness.context);
+    assert.equal(harness.appended.at(-1)?.data.fixed, undefined);
+    assert.equal(harness.statuses.at(-1), undefined);
   });
 
   test("the manual command reports when no conversation is available", async () => {
