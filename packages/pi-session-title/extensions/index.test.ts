@@ -381,8 +381,8 @@ describe("extension lifecycle and race protection", () => {
       message("assistant", [{ type: "text", text: "Updated middleware" }]),
     ];
     const titles: string[] = [];
-    const statuses: Array<string | undefined> = [];
-    const statusColors: string[] = [];
+    const widgets: Array<string[] | undefined> = [];
+    const themeColors: string[] = [];
     const notifications: string[] = [];
     const appended: any[] = [];
     const context = {
@@ -399,11 +399,13 @@ describe("extension lifecycle and race protection", () => {
         getSessionName: () => name,
       },
       ui: {
+        // Intentionally omits setStatus: pi-powerbar replaces the built-in footer, so the fixed
+        // indicator must render through a widget or the harness fails like the real TUI did.
         theme: { fg: (color: string, text: string) => {
-          statusColors.push(color);
+          themeColors.push(color);
           return text;
         } },
-        setStatus: (_key: string, text: string | undefined) => statuses.push(text),
+        setWidget: (_key: string, content: string[] | undefined) => widgets.push(content),
         setTitle: (title: string) => titles.push(title),
         notify: (text: string) => notifications.push(text),
         confirm: async () => {
@@ -438,8 +440,8 @@ describe("extension lifecycle and race protection", () => {
       context,
       entries,
       titles,
-      statuses,
-      statusColors,
+      widgets,
+      themeColors,
       notifications,
       appended,
       command: (args: string) => commandHandler?.(args, context),
@@ -548,7 +550,7 @@ describe("extension lifecycle and race protection", () => {
 
     assert.equal(harness.getName(), "Suggested title");
     assert.equal(harness.appended.at(-1)?.data.status, "generated");
-    assert.equal(harness.statuses.at(-1), undefined);
+    assert.equal(harness.widgets.at(-1), undefined);
     assert.match(harness.notifications.at(-1) ?? "", /Automatic refresh remains enabled/);
 
     harness.entries.push(
@@ -573,8 +575,8 @@ describe("extension lifecycle and race protection", () => {
     assert.equal(harness.getName(), "Fixed title");
     assert.equal(harness.appended.at(-1)?.data.status, "manual");
     assert.equal(harness.appended.at(-1)?.data.fixed, true);
-    assert.equal(harness.statuses.at(-1), "● Fixed: Fixed title");
-    assert.equal(harness.statusColors.at(-1), "success");
+    assert.deepEqual(harness.widgets.at(-1), ["● Fixed: Fixed title"]);
+    assert.equal(harness.themeColors.at(-1), "success");
     assert.match(harness.notifications.at(-1) ?? "", /Automatic refresh is locked/);
 
     harness.entries.push(
@@ -590,7 +592,7 @@ describe("extension lifecycle and race protection", () => {
     harness.setName("Manual title");
     await harness.handlers.get("session_info_changed")?.({ name: "Manual title" }, harness.context);
     assert.equal(harness.appended.at(-1)?.data.fixed, undefined);
-    assert.equal(harness.statuses.at(-1), undefined);
+    assert.equal(harness.widgets.at(-1), undefined);
   });
 
   test("the manual command reports when no conversation is available", async () => {

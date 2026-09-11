@@ -19,7 +19,7 @@ pi install npm:@oipsanthony/pi-session-title
 | `/session-title suggest "标题"` | 立即采用指定标题，后续自动刷新仍可替换它 |
 | `/session-title fix "标题"` | 立即采用指定标题，并锁定它，禁止自动刷新替换 |
 
-`/session-title suggest "标题"` 和 `/session-title fix "标题"` 都会清理控制字符、Markdown 包装和超过 `maxLength` 的内容。`fix` 的锁定行为与 Pi 内置 `/name` 相同；在 Pi TUI footer 中会显示绿色 `● Fixed: 标题` 标记。需要重新交给自动命名时，使用 `/session-title` 并确认。
+`/session-title suggest "标题"` 和 `/session-title fix "标题"` 都会清理控制字符、Markdown 包装和超过 `maxLength` 的内容。`fix` 的锁定行为与 Pi 内置 `/name` 相同；只要该标题仍处于锁定状态，Pi TUI 就会在编辑器上方显示绿色 `● Fixed: 标题`。该标记使用 widget 而不是 footer status，因为 `pi-powerbar` 等扩展会替换内置 footer，导致 status 文本不再显示。需要重新交给自动命名时，使用 `/session-title` 并确认。
 
 ## 配置
 

@@ -204,9 +204,9 @@ herdr pane report-metadata <pane-id> \
 - `/session-title`：基于当前 branch 最近最多 8 条 user/assistant text message 重新生成标题。
 - `/session-title status`：显示 enabled、当前状态、当前名称、配置模型和最终解析模型。
 - `/session-title suggest "标题"`：立即应用清洗后的指定标题，并将 ownership 交给插件；后续周期评估仍可替换该标题。
-- `/session-title fix "标题"`：立即应用清洗后的指定标题，并创建 persistent manual lock，禁止自动评估替换该标题；Pi TUI footer 使用绿色 `● Fixed: 标题` 标记该状态。
+- `/session-title fix "标题"`：立即应用清洗后的指定标题，并创建 persistent manual lock，禁止自动评估替换该标题；只要仍处于该 lock，Pi TUI 就在编辑器上方显示绿色 `● Fixed: 标题`。
 
-`/session-title suggest "标题"` 和 `/session-title fix "标题"` 必须中止正在进行的命名请求，并同步 Pi session、terminal 和 Herdr 展示标题。绿色 footer 标记只用于 `fix` 创建的 lock，手动 `/name` 不显示该标记。`fix` 的 lock 与 Pi 内置 `/name` 相同；若当前名称属于 manual lock，执行 `/session-title` 前必须要求一次确认。确认后 title ownership 交回插件，并从当前 user turn count 重新开始周期计数。
+`/session-title suggest "标题"` 和 `/session-title fix "标题"` 必须中止正在进行的命名请求，并同步 Pi session、terminal 和 Herdr 展示标题。绿色标记只用于 `fix` 创建的 lock，手动 `/name` 不显示该标记，并且必须使用 widget 而不是 footer status，因为其他扩展可以替换内置 footer。`fix` 的 lock 与 Pi 内置 `/name` 相同；若当前名称属于 manual lock，执行 `/session-title` 前必须要求一次确认。确认后 title ownership 交回插件，并从当前 user turn count 重新开始周期计数。
 
 ## 5. 配置
 

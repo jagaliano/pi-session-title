@@ -38,6 +38,8 @@ type SessionContext = ExtensionContext & {
 
 type ExplicitTitleMode = "suggest" | "fix";
 
+const INDICATOR_WIDGET_KEY = "pi-session-title";
+
 function parseExplicitTitleCommand(args: string): { mode: ExplicitTitleMode; title: string } | undefined {
   const match = /^\s*(suggest|fix)\s+([\s\S]+?)\s*$/u.exec(args);
   if (!match) return undefined;
@@ -103,9 +105,11 @@ export default function register(
   };
 
   const syncDisplay = async (ctx: SessionContext, title = sessionName(ctx)): Promise<void> => {
-    ctx.ui.setStatus(
-      "pi-session-title",
-      state?.fixed && title ? ctx.ui.theme.fg("success", `● Fixed: ${title}`) : undefined,
+    // Render through a widget instead of ctx.ui.setStatus(): status text is only drawn by the
+    // built-in footer, and extensions such as pi-powerbar replace that footer with an empty one.
+    ctx.ui.setWidget(
+      INDICATOR_WIDGET_KEY,
+      state?.fixed && title ? [ctx.ui.theme.fg("success", `● Fixed: ${title}`)] : undefined,
     );
     if (config.terminalTitle.enabled) {
       ctx.ui.setTitle(title ? renderTerminalTitle(config.terminalTitle.template, title, ctx.cwd) : "");
