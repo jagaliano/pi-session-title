@@ -381,6 +381,8 @@ describe("extension lifecycle and race protection", () => {
       message("assistant", [{ type: "text", text: "Updated middleware" }]),
     ];
     const titles: string[] = [];
+    const statuses: Array<string | undefined> = [];
+    const statusColors: string[] = [];
     const notifications: string[] = [];
     const appended: any[] = [];
     const context = {
@@ -397,6 +399,11 @@ describe("extension lifecycle and race protection", () => {
         getSessionName: () => name,
       },
       ui: {
+        theme: { fg: (color: string, text: string) => {
+          statusColors.push(color);
+          return text;
+        } },
+        setStatus: (_key: string, text: string | undefined) => statuses.push(text),
         setTitle: (title: string) => titles.push(title),
         notify: (text: string) => notifications.push(text),
         confirm: async () => {
@@ -431,6 +438,8 @@ describe("extension lifecycle and race protection", () => {
       context,
       entries,
       titles,
+      statuses,
+      statusColors,
       notifications,
       appended,
       command: (args: string) => commandHandler?.(args, context),
@@ -539,6 +548,7 @@ describe("extension lifecycle and race protection", () => {
 
     assert.equal(harness.getName(), "Suggested title");
     assert.equal(harness.appended.at(-1)?.data.status, "generated");
+    assert.equal(harness.statuses.at(-1), undefined);
     assert.match(harness.notifications.at(-1) ?? "", /Automatic refresh remains enabled/);
 
     harness.entries.push(
@@ -562,6 +572,9 @@ describe("extension lifecycle and race protection", () => {
 
     assert.equal(harness.getName(), "Fixed title");
     assert.equal(harness.appended.at(-1)?.data.status, "manual");
+    assert.equal(harness.appended.at(-1)?.data.fixed, true);
+    assert.equal(harness.statuses.at(-1), "● Fixed: Fixed title");
+    assert.equal(harness.statusColors.at(-1), "success");
     assert.match(harness.notifications.at(-1) ?? "", /Automatic refresh is locked/);
 
     harness.entries.push(

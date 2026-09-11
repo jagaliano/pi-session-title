@@ -26,6 +26,7 @@ export interface SessionTitleState {
   version: 1;
   status: SessionTitleStatus;
   title?: string;
+  fixed?: true;
   lastEvaluatedUserTurnCount: number;
   updatedAt: string;
 }
@@ -316,6 +317,7 @@ export function restoreState(entries: readonly unknown[]): SessionTitleState | u
       version: 1,
       status: data.status!,
       ...(typeof data.title === "string" && data.title ? { title: data.title } : {}),
+      ...(data.fixed === true ? { fixed: true as const } : {}),
       lastEvaluatedUserTurnCount: data.lastEvaluatedUserTurnCount!,
       updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : new Date(0).toISOString(),
     };
@@ -526,11 +528,13 @@ export function createState(
   status: SessionTitleStatus,
   lastEvaluatedUserTurnCount: number,
   title?: string,
+  fixed = false,
 ): SessionTitleState {
   return {
     version: 1,
     status,
     ...(title ? { title } : {}),
+    ...(fixed ? { fixed: true as const } : {}),
     lastEvaluatedUserTurnCount,
     updatedAt: new Date().toISOString(),
   };

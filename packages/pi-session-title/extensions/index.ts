@@ -103,6 +103,10 @@ export default function register(
   };
 
   const syncDisplay = async (ctx: SessionContext, title = sessionName(ctx)): Promise<void> => {
+    ctx.ui.setStatus(
+      "pi-session-title",
+      state?.fixed && title ? ctx.ui.theme.fg("success", `● Fixed: ${title}`) : undefined,
+    );
     if (config.terminalTitle.enabled) {
       ctx.ui.setTitle(title ? renderTerminalTitle(config.terminalTitle.template, title, ctx.cwd) : "");
     }
@@ -265,7 +269,7 @@ export default function register(
     const changedName = event.name;
     if (pendingOwnName === changedName) {
       pendingOwnName = undefined;
-    } else if (state?.status !== "manual" && changedName !== state?.title) {
+    } else if (changedName !== state?.title) {
       inFlight?.abort();
       markManual(ctx, changedName);
     }
@@ -360,9 +364,14 @@ export default function register(
         inFlight?.abort();
         inFlight = undefined;
         pendingOwnName = title;
+        persistState(createState(
+          explicitTitle.mode === "fix" ? "manual" : "generated",
+          turnCount(ctx),
+          title,
+          explicitTitle.mode === "fix",
+        ));
         pi.setSessionName(title);
         await syncDisplay(ctx, title);
-        persistState(createState(explicitTitle.mode === "fix" ? "manual" : "generated", turnCount(ctx), title));
         ctx.ui.notify(
           explicitTitle.mode === "fix"
             ? `Session title fixed: ${title}. Automatic refresh is locked.`
