@@ -111,7 +111,7 @@ export default function register(
       ? undefined
       : state.fixed
         ? ctx.ui.theme.fg("success", `● Fixed: ${title}`)
-        : ctx.ui.theme.fg("warning", `● Title: ${title}`);
+        : ctx.ui.theme.fg("accent", `● Title: ${title}`);
     ctx.ui.setWidget(INDICATOR_WIDGET_KEY, indicator ? [indicator] : undefined);
     if (config.terminalTitle.enabled) {
       ctx.ui.setTitle(title ? renderTerminalTitle(config.terminalTitle.template, title, ctx.cwd) : "");

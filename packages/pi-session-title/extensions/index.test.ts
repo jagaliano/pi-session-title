@@ -570,7 +570,7 @@ describe("extension lifecycle and race protection", () => {
     await harness.command("show");
 
     assert.deepEqual(harness.widgets.at(-1), ["● Title: Suggested title"]);
-    assert.equal(harness.themeColors.at(-1), "warning");
+    assert.equal(harness.themeColors.at(-1), "accent");
     assert.equal(harness.appended.at(-1)?.data.visible, true);
 
     harness.entries.push(
