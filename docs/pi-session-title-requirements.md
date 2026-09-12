@@ -208,7 +208,7 @@ herdr pane report-metadata <pane-id> \
 - `/session-title show`：持久化显示当前标题；固定标题使用绿色 `● Fixed: 标题`，自动、建议或非固定手动标题使用蓝色 `● Title: 标题`。
 - `/session-title hide`：持久化隐藏当前标题。
 
-`/session-title suggest "标题"` 和 `/session-title fix "标题"` 必须中止正在进行的命名请求，并同步 Pi session、terminal 和 Herdr 展示标题。`show` 后，LLM 后续更新标题时必须同步显示新标题。绿色标记只用于 `fix` 创建的 lock，手动 `/name` 显示为黄色；标记必须使用 widget 而不是 footer status，因为其他扩展可以替换内置 footer。`fix` 的 lock 与 Pi 内置 `/name` 相同；若当前名称属于 manual lock，执行 `/session-title` 前必须要求一次确认。确认后 title ownership 交回插件，并从当前 user turn count 重新开始周期计数。
+`/session-title suggest "标题"` 和 `/session-title fix "标题"` 必须中止正在进行的命名请求，并同步 Pi session、terminal 和 Herdr 展示标题。`show` 后，LLM 后续更新标题时必须同步显示新标题。绿色标记只用于 `fix` 创建的 lock，手动 `/name` 显示为蓝色；标记必须使用 widget 而不是 footer status，因为其他扩展可以替换内置 footer。`fix` 的 lock 与 Pi 内置 `/name` 相同；若当前名称属于 manual lock，执行 `/session-title` 前必须要求一次确认。确认后 title ownership 交回插件，并从当前 user turn count 重新开始周期计数。
 
 ## 5. 配置
 

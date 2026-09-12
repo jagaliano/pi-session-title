@@ -563,20 +563,23 @@ describe("extension lifecycle and race protection", () => {
     assert.equal(calls, 1);
   });
 
-  test("show and hide control a yellow generated-title widget across refreshes", async () => {
+  test("show and hide preserve automatic refresh state and render a blue generated-title widget", async () => {
     const harness = createHarness(async () => response("Refreshed title"), { refreshTurns: 1 });
     await harness.handlers.get("session_start")?.({ reason: "startup" }, harness.context);
     await harness.command('suggest "Suggested title"');
-    await harness.command("show");
-
-    assert.deepEqual(harness.widgets.at(-1), ["● Title: Suggested title"]);
-    assert.equal(harness.themeColors.at(-1), "accent");
-    assert.equal(harness.appended.at(-1)?.data.visible, true);
+    const lastEvaluatedUserTurnCount = harness.appended.at(-1)?.data.lastEvaluatedUserTurnCount;
 
     harness.entries.push(
       message("user", [{ type: "text", text: "Add tests" }]),
       message("assistant", [{ type: "text", text: "Added tests" }]),
     );
+    await harness.command("show");
+
+    assert.deepEqual(harness.widgets.at(-1), ["● Title: Suggested title"]);
+    assert.equal(harness.themeColors.at(-1), "accent");
+    assert.equal(harness.appended.at(-1)?.data.visible, true);
+    assert.equal(harness.appended.at(-1)?.data.lastEvaluatedUserTurnCount, lastEvaluatedUserTurnCount);
+
     harness.handlers.get("agent_settled")?.({}, harness.context);
     await waitFor(() => harness.getName() === "Refreshed title");
 

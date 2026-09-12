@@ -370,7 +370,7 @@ export default function register(
         const currentState = restoreState(branch(ctx));
         persistState(createState(
           currentState?.status ?? "manual",
-          turnCount(ctx),
+          currentState?.lastEvaluatedUserTurnCount ?? turnCount(ctx),
           title,
           { fixed: currentState?.fixed, visible: displayCommand === "show" },
         ));
