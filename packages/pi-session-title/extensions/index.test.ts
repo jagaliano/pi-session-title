@@ -563,6 +563,29 @@ describe("extension lifecycle and race protection", () => {
     assert.equal(calls, 1);
   });
 
+  test("show and hide control a yellow generated-title widget across refreshes", async () => {
+    const harness = createHarness(async () => response("Refreshed title"), { refreshTurns: 1 });
+    await harness.handlers.get("session_start")?.({ reason: "startup" }, harness.context);
+    await harness.command('suggest "Suggested title"');
+    await harness.command("show");
+
+    assert.deepEqual(harness.widgets.at(-1), ["● Title: Suggested title"]);
+    assert.equal(harness.themeColors.at(-1), "warning");
+    assert.equal(harness.appended.at(-1)?.data.visible, true);
+
+    harness.entries.push(
+      message("user", [{ type: "text", text: "Add tests" }]),
+      message("assistant", [{ type: "text", text: "Added tests" }]),
+    );
+    harness.handlers.get("agent_settled")?.({}, harness.context);
+    await waitFor(() => harness.getName() === "Refreshed title");
+
+    assert.deepEqual(harness.widgets.at(-1), ["● Title: Refreshed title"]);
+    await harness.command("hide");
+    assert.equal(harness.widgets.at(-1), undefined);
+    assert.equal(harness.appended.at(-1)?.data.visible, false);
+  });
+
   test("fixed titles create a manual lock that blocks automatic refresh", async () => {
     let calls = 0;
     const harness = createHarness(async () => {
@@ -592,7 +615,7 @@ describe("extension lifecycle and race protection", () => {
     harness.setName("Manual title");
     await harness.handlers.get("session_info_changed")?.({ name: "Manual title" }, harness.context);
     assert.equal(harness.appended.at(-1)?.data.fixed, undefined);
-    assert.equal(harness.widgets.at(-1), undefined);
+    assert.deepEqual(harness.widgets.at(-1), ["● Title: Manual title"]);
   });
 
   test("the manual command reports when no conversation is available", async () => {

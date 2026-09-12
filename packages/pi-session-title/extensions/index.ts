@@ -107,10 +107,12 @@ export default function register(
   const syncDisplay = async (ctx: SessionContext, title = sessionName(ctx)): Promise<void> => {
     // Render through a widget instead of ctx.ui.setStatus(): status text is only drawn by the
     // built-in footer, and extensions such as pi-powerbar replace that footer with an empty one.
-    ctx.ui.setWidget(
-      INDICATOR_WIDGET_KEY,
-      state?.fixed && title ? [ctx.ui.theme.fg("success", `● Fixed: ${title}`)] : undefined,
-    );
+    const indicator = !(state?.visible ?? state?.fixed) || !title
+      ? undefined
+      : state.fixed
+        ? ctx.ui.theme.fg("success", `● Fixed: ${title}`)
+        : ctx.ui.theme.fg("warning", `● Title: ${title}`);
+    ctx.ui.setWidget(INDICATOR_WIDGET_KEY, indicator ? [indicator] : undefined);
     if (config.terminalTitle.enabled) {
       ctx.ui.setTitle(title ? renderTerminalTitle(config.terminalTitle.template, title, ctx.cwd) : "");
     }
@@ -121,7 +123,7 @@ export default function register(
   };
 
   const markManual = (ctx: SessionContext, title = sessionName(ctx)): void => {
-    const next = createState("manual", turnCount(ctx), title);
+    const next = createState("manual", turnCount(ctx), title, { visible: state?.visible ?? state?.fixed });
     persistState(next);
   };
 
@@ -194,27 +196,27 @@ export default function register(
       }
 
       if (result.kind === "failed" || (result.kind === "keep" && !currentName)) {
-        persistState(createState("failed", turns, currentName));
+        persistState(createState("failed", turns, currentName, { visible: state?.visible ?? state?.fixed }));
         showNamingWarning(ctx, "Automatic session title generation failed.");
         return;
       }
 
       if (result.kind === "keep") {
-        persistState(createState("generated", turns, currentName));
+        persistState(createState("generated", turns, currentName, { visible: state?.visible ?? state?.fixed }));
         if (kind === "manual") ctx.ui.notify("Session title is already up to date.", "info");
         return;
       }
 
       if (!contextStillCurrent(ctx, captured)) return;
       pendingOwnName = result.title;
+      persistState(createState("generated", turns, result.title, { visible: state?.visible ?? state?.fixed }));
       pi.setSessionName(result.title);
       await syncDisplay(ctx, result.title);
       if (!contextStillCurrent(ctx, { ...captured, name: result.title })) return;
-      persistState(createState("generated", turns, result.title));
       if (kind === "manual") ctx.ui.notify(`Session title updated: ${result.title}`, "info");
     } catch {
       if (!controller.signal.aborted && contextStillCurrent(ctx, captured)) {
-        persistState(createState("failed", turns, currentName));
+        persistState(createState("failed", turns, currentName, { visible: state?.visible ?? state?.fixed }));
         showNamingWarning(ctx, "Automatic session title generation failed.");
       }
     } finally {
@@ -346,8 +348,9 @@ export default function register(
         return;
       }
       const explicitTitle = parseExplicitTitleCommand(command);
-      if (command && !explicitTitle) {
-        ctx.ui.notify("Usage: /session-title [status | suggest <title> | fix <title>]", "warning");
+      const displayCommand = command === "show" || command === "hide" ? command : undefined;
+      if (command && !explicitTitle && !displayCommand) {
+        ctx.ui.notify("Usage: /session-title [status | show | hide | suggest <title> | fix <title>]", "warning");
         return;
       }
       if (!config.enabled) {
@@ -356,6 +359,23 @@ export default function register(
       }
       if (ctx.mode !== "tui") {
         ctx.ui.notify("/session-title requires interactive mode.", "warning");
+        return;
+      }
+      if (displayCommand) {
+        const title = sessionName(ctx);
+        if (!title) {
+          ctx.ui.notify("No session title is available to display.", "warning");
+          return;
+        }
+        const currentState = restoreState(branch(ctx));
+        persistState(createState(
+          currentState?.status ?? "manual",
+          turnCount(ctx),
+          title,
+          { fixed: currentState?.fixed, visible: displayCommand === "show" },
+        ));
+        await syncDisplay(ctx, title);
+        ctx.ui.notify(displayCommand === "show" ? "Session title display enabled." : "Session title display hidden.", "info");
         return;
       }
       if (explicitTitle) {
@@ -372,7 +392,10 @@ export default function register(
           explicitTitle.mode === "fix" ? "manual" : "generated",
           turnCount(ctx),
           title,
-          explicitTitle.mode === "fix",
+          {
+            fixed: explicitTitle.mode === "fix",
+            visible: explicitTitle.mode === "fix" || state?.visible || state?.fixed,
+          },
         ));
         pi.setSessionName(title);
         await syncDisplay(ctx, title);
@@ -396,7 +419,7 @@ export default function register(
       }
 
       const currentName = sessionName(ctx);
-      persistState(createState("generated", turnCount(ctx), currentName));
+      persistState(createState("generated", turnCount(ctx), currentName, { visible: state?.visible ?? state?.fixed }));
       await evaluate(ctx, "manual");
     },
   });
